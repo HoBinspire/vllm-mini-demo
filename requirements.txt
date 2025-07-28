@@ -1,0 +1,3 @@
+vllm>=0.4.2          # 主框架
+openai>=1.0          # 客户端 SDK
+python-dotenv>=1.0   # 读取 .env（可选）
