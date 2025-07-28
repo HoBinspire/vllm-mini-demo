@@ -70,30 +70,15 @@ python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 2️⃣ app.py （3 行核心，其余是日志）
-```python
-# app.py
-import os, uvicorn, logging
-from vllm import LLM, SamplingParams
-from vllm.entrypoints.openai.api_server import build_app
+## 2️⃣ 在终端中启动服务(不采用 app.py)
+```bash
+export HF_ENDPOINT=https://hf-mirror.com # 配置镜像地址
+export HF_HOME=/your/custom/path # 临时修改 HuggingFace 缓存目录，只对当前终端有效
 
-# 如果你想换模型，在这里改
-MODEL = os.getenv("MODEL", "microsoft/DialoGPT-small")   # 小模型快下载
-llm_engine = LLM(model=MODEL, tensor_parallel_size=1)    # 单卡即可
-
-# 构建 FastAPI 应用
-app = build_app(llm_engine)
-
-if __name__ == "__main__":
-    uvicorn.run(
-        "app:app",
-        host="0.0.0.0",
-        port=8000,
-        log_level="info"
-    )
+CUDA_VISIBLE_DEVICES=1,2,3 python -m vllm.entrypoints.openai.api_server --model microsoft/DialoGPT-small --host 0.0.0.0 --port 8000
 ```
 
-## 3️⃣ client.py （1 行调用）
+## 3️⃣ 另起终端，启动 client.py
 ```python
 # client.py
 from openai import OpenAI
@@ -101,7 +86,7 @@ client = OpenAI(base_url="http://localhost:8000/v1", api_key="dummy")
 
 resp = client.chat.completions.create(
     model="microsoft/DialoGPT-small",
-    messages=[{"role": "user", "content": "用一句话介绍 vLLM"}],
+    messages=[{"role": "user", "content": "中国首都是哪里？"}],
     max_tokens=50
 )
 print(resp.choices[0].message.content)
@@ -124,11 +109,4 @@ curl -X POST http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"model":"microsoft/DialoGPT-small","messages":[{"role":"user","content":"Hi"}],"max_tokens":32}' \
   &  # 复制多条即可
-```
-
-## 6️⃣ 一键脚本（懒人版）
-```bash
-git clone https://github.com/yourname/vllm-mini-demo.git
-cd vllm-mini-demo
-python app.py
 ```
